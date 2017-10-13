@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <title>outputsim</title>
+    <script src='outputsim.js'></script>
+    <style>
+      html, body {
+        padding: 0;
+        margin: 0;
+        background: black;
+        overflow: hidden;
+      }
+      .screen {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        outline: 1px solid silver;
+      }
+      .zx-spectrum.screen {
+        width: 256px;
+        height: 192px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class='zx-spectrum screen'></div>
+  </body>
+</html>
