@@ -4,9 +4,10 @@ self.outputsim = {};
 outputsim.init = function init(container) {
   return new Promise(function(resolve, reject) {
     if (container.classList.contains('zx-spectrum')) {
+      const pageSize = 64 * 1024;
       const systemMemoryBufferSize = 128 * 1024;
       const systemMemoryPageOffset = 0;
-      const systemMemoryPageSize = Math.ceil(systemMemoryBufferSize / (128 * 1024));
+      const systemMemoryPageSize = Math.ceil(systemMemoryBufferSize / pageSize);
       const viewportWidth = 256;
       const viewportHeight = 192;
       const borderWidth = 48;
@@ -16,18 +17,18 @@ outputsim.init = function init(container) {
       const pixelBufferSize = 4 * totalWidth * totalHeight;
       const paletteBufferSize = 256 * 4;
       const imageMemoryPageOffset = systemMemoryPageOffset + systemMemoryPageSize;
-      const imageMemoryPageSize = Math.ceil((pixelBufferSize + paletteBufferSize) / (128 * 1024));
+      const imageMemoryPageSize = Math.ceil((pixelBufferSize + paletteBufferSize) / pageSize);
       container.memory = new WebAssembly.Memory({
         initial: systemMemoryPageSize + imageMemoryPageSize,
       });
       container.palette = new Uint32Array(
         container.memory.buffer,
-        imageMemoryPageOffset * (128 * 1024) + pixelBufferSize,
+        imageMemoryPageOffset * pageSize + pixelBufferSize,
         256);
       const imageData = container.imageData = new ImageData(
         new Uint8ClampedArray(
           container.memory.buffer,
-          imageMemoryPageOffset * (128 * 1024),
+          imageMemoryPageOffset * pageSize,
           pixelBufferSize),
         totalWidth, totalHeight);
       while (container.firstChild) container.removeChild(container.firstChild);
