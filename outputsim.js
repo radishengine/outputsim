@@ -2,9 +2,9 @@
 self.outputsim = {};
 
 outputsim.init = function init(container) {
+  const pageSize = 64 * 1024;
   return new Promise(function(resolve, reject) {
     if (container.classList.contains('zx-spectrum')) {
-      const pageSize = 64 * 1024;
       const systemMemoryBufferSize = 128 * 1024;
       const systemMemoryPageOffset = 0;
       const systemMemoryPageSize = Math.ceil(systemMemoryBufferSize / pageSize);
@@ -33,9 +33,9 @@ outputsim.init = function init(container) {
         totalWidth, totalHeight);
       while (container.firstChild) container.removeChild(container.firstChild);
       container.appendChild(container.canvas = document.createElement('CANVAS'));
-      const ctx2d = container.ctx2d = container.canvas.getContext('2d');
       container.canvas.width = totalWidth;
       container.canvas.height = totalHeight;
+      const ctx2d = container.ctx2d = container.canvas.getContext('2d');
       var nextFrameAt = performance.now();
       function nextFrame(t) {
         if (t >= nextFrameAt) {
@@ -46,6 +46,65 @@ outputsim.init = function init(container) {
         requestAnimationFrame(nextFrame);
       }
       nextFrame(nextFrameAt);
+      return container;
+    }
+    else if (container.classList.contains('nes')) {
+      const systemMemoryBufferSize = 0x10000;
+      const systemMemoryPageOffset = 0;
+      const systemMemoryPageCount = Math.ceil(systemMemoryBufferSize / pageSize);
+      const width = 256;
+      const height = 240;
+      const paletteBufferSize = 256 * 4;
+      const pixelBufferSize = width * height * 4;
+      const imageMemoryPageOffset = systemMemoryPageOffset = systemMemoryPageCount;
+      const imageMemoryPageCount = Math.ceil((paletteBufferSize + pixelBufferSize) / pageSize);
+      container.memory = new WebAssembly.Memory({
+        initial: systemMemoryPageCount + imageMemoryPageCount,
+      });
+      container.palette = new Uint32Array(
+        container.memory.buffer,
+        imageMemoryPageOffset * pageSize + pixelBufferSize,
+        256);
+      const pal = [
+        0x808080, 0x003DA6, 0x0012B0, 0x440096,
+        0xA1005E, 0xC70028, 0xBA0600, 0x8C1700,
+        0x5C2F00, 0x104500, 0x054A00, 0x00472E,
+        0x004166, 0x000000, 0x050505, 0x050505,
+        0xC7C7C7, 0x0077FF, 0x2155FF, 0x8237FA,
+        0xEB2FB5, 0xFF2950, 0xFF2200, 0xD63200,
+        0xC46200, 0x358000, 0x058F00, 0x008A55,
+        0x0099CC, 0x212121, 0x090909, 0x090909,
+        0xFFFFFF, 0x0FD7FF, 0x69A2FF, 0xD480FF,
+        0xFF45F3, 0xFF618B, 0xFF8833, 0xFF9C12,
+        0xFABC20, 0x9FE30E, 0x2BF035, 0x0CF0A4,
+        0x05FBFF, 0x5E5E5E, 0x0D0D0D, 0x0D0D0D,
+        0xFFFFFF, 0xA6FCFF, 0xB3ECFF, 0xDAABEB,
+        0xFFA8F9, 0xFFABB3, 0xFFD2B0, 0xFFEFA6,
+        0xFFF79C, 0xD7E895, 0xA6EDAF, 0xA2F2DA,
+        0x99FFFC, 0xDDDDDD, 0x111111, 0x111111,
+      ];
+      var palDV = new DataView(
+        container.palette.buffer,
+        container.palette.byteOffset,
+        container.palette.byteLength);
+      for (var i = 0; i < pal.length; i++) {
+        var v = (pal[i] << 8) | 0xff;
+        palDV.setInt32(i * 4, v);
+        palDV.setInt32((64 + i) * 4, v);
+        palDV.setInt32((128 + i) * 4, v);
+        palDV.setInt32((192 + i) * 4, v);
+      }
+      const imageData = container.imageData = new ImageData(
+        new Uint8ClampedArray(
+          container.memory.buffer,
+          imageMemoryPageOffset * pageSize,
+          pixelBufferSize),
+        width, height);
+      while (container.firstChild) container.removeChild(container.firstChild);
+      container.appendChild(container.canvas = document.createElement('CANVAS'));
+      container.canvas.width = width;
+      container.canvas.height = height;
+      const ctx2d = container.ctx2d = container.canvas.getContext('2d');
       return container;
     }
     else {
